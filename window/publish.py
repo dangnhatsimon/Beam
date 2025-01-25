@@ -10,7 +10,7 @@ if __name__ == "__main__":
     project = "streaming-445511"
 
     # Replace  with your pubsub topic
-    pubsub_topic = "projects/streaming-445511/topics/Topic1"
+    pubsub_topic = "projects/streaming-445511/topics/Topic3"
 
     credentials = service_account.Credentials.from_service_account_file("D:/Beam/credentials.json")
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # create publisher
     publisher = pubsub_v1.PublisherClient(credentials=credentials)
 
-    with open(input_file, 'rb') as ifp:
+    with open(input_file, "rb") as ifp:
         # skip header
         header = ifp.readline()
         # loop over each record

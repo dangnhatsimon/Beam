@@ -5,6 +5,7 @@ from apache_beam.transforms import window
 from apache_beam.transforms.trigger import AfterWatermark, AfterProcessingTime, AccumulationMode, AfterCount
 from apache_beam.options.pipeline_options import GoogleCloudOptions
 
+
 # Replace with your service account path
 service_account_path = "D:/Beam/credentials.json"
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = service_account_path
@@ -29,6 +30,7 @@ p = beam.Pipeline(options=options)
 
 
 def encode_byte_string(element):
+    print(element)
     element = str(element)
     return element.encode("utf-8")
 
@@ -49,7 +51,7 @@ def calculateProfit(elements):
 
 pubsub_data = (
     p 
-    | 'Read from pub sub' >> beam.io.ReadFromPubSub(subscription=input_subscription, timestamp_attribute=1553578219)
+    | 'Read from pub sub' >> beam.io.ReadFromPubSub(subscription=input_subscription)
     # STR_2,Mumbai,PR_265,Cosmetics,8,39,66,1553578219/r/n
     | 'Decode byte string' >> beam.Map(lambda data: data.decode("utf-8"))
     | 'Remove extra chars' >> beam.Map(lambda data: (data.rstrip().lstrip()))          # STR_2,Mumbai,PR_265,Cosmetics,8,39,66,1553578219
@@ -58,29 +60,11 @@ pubsub_data = (
     | 'Create Profit Column' >> beam.Map(calculateProfit)                              # [STR_2,Mumbai,PR_265,Cosmetics,8,39,66,1553578219,27]
     | 'Apply custom timestamp' >> beam.Map(custom_timestamp)
     | 'Form Key Value pair' >> beam.Map(lambda elements: (elements[0], int(elements[8])))  # STR_2 27
-    # | 'Window' >> beam.WindowInto(window.FixedWindows(20), trigger=AfterProcessingTime(10), accumulation_mode=AccumulationMode.DISCARDING)
-    | 'Window' >> beam.WindowInto(window.FixedWindows(20), trigger=AfterWatermark(early=AfterProcessingTime(5), late=AfterCount(5)), accumulation_mode=AccumulationMode.DISCARDING)
+    | 'Window' >> beam.WindowInto(window.SlidingWindows(30, 10))
     | 'Sum values' >> beam.CombinePerKey(sum)
     | 'Encode to byte string' >> beam.Map(encode_byte_string)  #Pubsub takes data in form of byte strings 
     | 'Write to pus sub' >> beam.io.WriteToPubSub(output_topic)
 )
-
-# pubsub_data = (
-#     p 
-#     | 'Read from pub sub' >> beam.io.ReadFromPubSub(subscription=input_subscription)
-#     # STR_2,Mumbai,PR_265,Cosmetics,8,39,66,1553578219/r/n
-#     | 'Decode byte string' >> beam.Map(lambda data: data.decode("utf-8"))
-#     | 'Remove extra chars' >> beam.Map(lambda data: (data.rstrip().lstrip()))          # STR_2,Mumbai,PR_265,Cosmetics,8,39,66,1553578219
-#     | 'Split Row' >> beam.Map(lambda row: row.split(','))                             # [STR_2,Mumbai,PR_265,Cosmetics,8,39,66,1553578219]
-#     | 'Filter By Country' >> beam.Filter(lambda elements: (elements[1] == "Mumbai" or elements[1] == "Bangalore"))
-#     | 'Create Profit Column' >> beam.Map(calculateProfit)                              # [STR_2,Mumbai,PR_265,Cosmetics,8,39,66,1553578219,27]
-#     # | 'Apply custom timestamp' >> beam.Map(custom_timestamp)
-#     | 'Form Key Value pair' >> beam.Map(lambda elements: (elements[0], int(elements[7])))  # STR_2 27
-#     | 'Window' >> beam.WindowInto(window.FixedWindows(20))
-#     | 'Sum values' >> beam.CombinePerKey(sum)
-#     | 'Encode to byte string' >> beam.Map(encode_byte_string)  #Pubsub takes data in form of byte strings 
-#     | 'Write to pus sub' >> beam.io.WriteToPubSub(output_topic)
-# )
 
 result = p.run()
 result.wait_until_finish()

@@ -11,7 +11,7 @@ class FilterEvensDoFn(beam.DoFn):
             yield element
 
 evens = ( p
-         | beam.Create(['1','2','3'])
+         | beam.Create(["1", "2", "3"])
          | beam.ParDo(FilterEvensDoFn()) 
         )
 
@@ -21,7 +21,7 @@ p.run()
 p = beam.Pipeline()
 
 evens = ( p 
-         | beam.Create(['one','two','three']) 
+         | beam.Create(["one", "two", "three"]) 
          | beam.Filter(lambda x: x % 2 == 0).with_input_types(int) 
         )
 

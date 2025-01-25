@@ -3,7 +3,7 @@ from apache_beam.options.pipeline_options import PipelineOptions, StandardOption
 import os
 from apache_beam import Windowing
 
-service_account_path = "D:/Beam/streaming/credentials.json"
+service_account_path = "D:/Beam/credentials.json"
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = service_account_path
 
 input_subscription = "projects/streaming-445511/subscriptions/Topic1-sub"

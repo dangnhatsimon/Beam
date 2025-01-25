@@ -1,30 +1,29 @@
 import apache_beam as beam
 
 class MyTransform(beam.PTransform):
-  
-  def expand(self, input_coll):
-    
-    a = ( 
-        input_coll
-                       | 'Group and sum1' >> beam.CombinePerKey(sum)
-                       | 'count filter accounts' >> beam.Filter(filter_on_count)
-                       | 'Regular accounts employee' >> beam.Map(format_output)
-              
-    )
-    return a
+    def expand(self, input_coll):
+      a = ( 
+          input_coll
+                        | 'Group and sum1' >> beam.CombinePerKey(sum)
+                        | 'count filter accounts' >> beam.Filter(filter_on_count)
+                        | 'Regular accounts employee' >> beam.Map(format_output)
+                
+      )
+      return a
 
 def SplitRow(element):
     return element.split(',')
   
   
 def filter_on_count(element):
-  name, count = element
-  if count > 30:
-    return element
-  
+    name, count = element
+    if count > 30:
+      return element
+
+
 def format_output(element):
-  name, count = element
-  return ', '.join((name.encode('ascii'),str(count),'Regular employee'))
+    name, count = element
+    return ', '.join((name.encode('ascii'), str(count), 'Regular employee'))
 
 p = beam.Pipeline()
 
